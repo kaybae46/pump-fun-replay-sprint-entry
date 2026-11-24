@@ -1,23 +1,27 @@
 // Trend-following paper bot for the pump.fun replay (agent-fun/replay/v2).
 //
-// The harness opens with a hello line, then sends one batch per slot and a done
-// line at the end; this bot answers every batch with its orders (possibly none).
-// Every decision below is a pure function of the batch stream: no clock, no
-// randomness, no environment reads, so the two grading runs produce identical
-// action logs.
+// How the harness drives it: a hello line, then one batch per slot, then a
+// done line. The bot answers every batch with its orders (possibly none) and
+// exits on done. Every choice below is a pure function of the batch stream —
+// no clock, no randomness, no environment reads — so the two grading runs
+// produce byte-identical action logs.
 //
-// Idea, kept deliberately simple to avoid overfitting the dev window:
-//   * Buy only curves that already show accelerating buy pressure: mature
+// The idea, kept deliberately simple so it does not overfit the dev window:
+//   * Only buy curves that already show accelerating buy pressure: mature
 //     (past minAge slots since creation), net SOL flowing in over a short
 //     window, several distinct buyers, price up but not vertical, sitting
 //     near its window high, and the newer half of the window buying harder
 //     than the older half.
-//   * First buy is small (initialSol). Add to the position only while it is
-//     working: price at or above the last buy and net flow still positive,
-//     up to stakeSol total. False starts cost little; runners get size.
+//   * The first buy is small (initialSol). Add to the position only while it
+//     is working: price at or above the last buy and net flow still
+//     positive, up to stakeSol total. False starts cost little; runners get
+//     size.
 //   * Sell the whole position on the first of: a stop loss against cost, a
 //     trailing stop from its best close value, or a time limit. A curve that
-//     completes is closed by the replay itself at its final reserves.
+//     completes is closed by the replay itself at its final reserves. The
+//     trail is tight on purpose (12% from the peak, armed once up 2%): in
+//     this window most runners give the money back, so winners are banked
+//     early instead of ridden back to the stop.
 //   * Tiny probe round trips keep the run above the guardrails (at least 20
 //     coins with round trips of 0.01 SOL or more): when the bot's own fills
 //     or coins lag the pace set in block time, it buys probeSol of a liquid
@@ -100,8 +104,8 @@ export const DEFAULT_PARAMS: Params = {
   minBuySol: 0.01,
   buySlipBps: 1500,
   stopLoss: 0.1,
-  trail: 0.15,
-  trailArm: 0.03,
+  trail: 0.12,
+  trailArm: 0.02,
   maxHold: 1500,
   cooldown: 150,
   maxEntries: 2,
