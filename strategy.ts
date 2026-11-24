@@ -19,9 +19,12 @@
 //   * Sell the whole position on the first of: a stop loss against cost, a
 //     trailing stop from its best close value, or a time limit. A curve that
 //     completes is closed by the replay itself at its final reserves. The
-//     trail is tight on purpose (12% from the peak, armed once up 2%): in
+//     trail is tight on purpose (12% from the peak, armed once up 4%): in
 //     this window most runners give the money back, so winners are banked
-//     early instead of ridden back to the stop.
+//     early instead of ridden back to the stop. Arming at +4% instead of
+//     +2% keeps the trail off during the first wobble after entry, so a
+//     position that is barely green is not sold on a shallow dip before it
+//     has had a chance to run.
 //   * Tiny probe round trips keep the run above the guardrails (at least 20
 //     coins with round trips of 0.01 SOL or more): when the bot's own fills
 //     or coins lag the pace set in block time, it buys probeSol of a liquid
@@ -105,7 +108,7 @@ export const DEFAULT_PARAMS: Params = {
   buySlipBps: 1500,
   stopLoss: 0.1,
   trail: 0.12,
-  trailArm: 0.02,
+  trailArm: 0.04,
   maxHold: 1500,
   cooldown: 150,
   maxEntries: 2,
